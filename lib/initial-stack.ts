@@ -1,3 +1,4 @@
+import * as cdk from "aws-cdk-lib";
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
@@ -31,6 +32,21 @@ export class InitialStack extends Stack {
     const gateway = new apigateway.RestApi(this, "aiGateway", {
       restApiName: 'AI Gateway',
       description: 'AI Gateway Initial Prototype',
+      deployOptions: {
+        loggingLevel: apigateway.MethodLoggingLevel.INFO,
+        dataTraceEnabled: true,
+        metricsEnabled: true,
+        accessLogDestination: new apigateway.LogGroupLogDestination(
+          new cdk.aws_logs.LogGroup(this, 'TokenJsGatewayAccessLogs', {
+            logGroupName: `/aws/apigateway/${id}/access-logs`,
+            retention: cdk.aws_logs.RetentionDays.FOUR_MONTHS, // Customize retention period
+            removalPolicy: cdk.RemovalPolicy.DESTROY // Or RETAIN
+          })
+        ),
+        
+        // Customize the access log format if needed
+        accessLogFormat: apigateway.AccessLogFormat.jsonWithStandardFields()
+      }
     });
 
     const chatResource = gateway.root.addResource('chat');
